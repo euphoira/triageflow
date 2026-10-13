@@ -1,0 +1,82 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="dark">
+  <meta name="description" content="TriageFlow · 让每个故障分析结论都有代码作证。">
+  <title>TriageFlow · 证据驱动的故障分析</title>
+  <link rel="icon" type="image/svg+xml" href="/static/favicon.svg">
+  <link rel="stylesheet" href="/static/styles.css">
+  <script src="/static/app.js" defer></script>
+</head>
+<body>
+  <aside class="sidebar">
+    <a href="/" class="brand" aria-label="TriageFlow 首页"><span class="brand-mark">t<span>f</span></span><strong>TriageFlow<small>AGENT WORKBENCH</small></strong></a>
+    <div class="workspace-label"><span class="status-dot"></span> LOCAL WORKSPACE <span class="version">v0.1</span></div>
+    <button id="new-run" class="nav-item active"><span>＋</span> 新建调查 <kbd>N</kbd></button>
+    <div class="side-heading">最近运行 <button id="refresh-history" class="icon-button" aria-label="刷新历史记录">↻</button></div>
+    <div id="history" class="history"><p class="subtle">暂无运行记录</p></div>
+    <div class="sidebar-bottom">
+      <div class="boundary-icon">⌘</div><strong>源码只读 · 过程可追溯</strong>
+      <p>每一次工具调用都有记录。<br>每一条代码引用都经过核验。</p>
+      <a href="/openapi.json" target="_blank" rel="noopener">OpenAPI 定义 <span>↗</span></a>
+    </div>
+  </aside>
+
+  <main>
+    <header class="topbar"><div><span class="subtle">工作空间</span><span class="crumb">/</span>故障调查</div><div class="topbar-right"><span id="connection" class="connection"><i></i> 连接中</span><span id="mode-badge" class="mode-badge">DEMO</span></div></header>
+    <div class="main-content">
+      <section class="hero">
+        <div><div class="eyebrow"><span></span> EVIDENCE FIRST. ALWAYS.</div><h1>让每个结论，<br class="mobile-break">都有代码作证<span>。</span></h1><p>从一条 Bug 描述，到一份可核验的调查报告。</p></div>
+        <div class="hero-meta"><span>PLAN → INSPECT → VERIFY</span><strong>3 个角色<span> / </span>1 条证据链</strong></div>
+      </section>
+
+      <div id="mode-note" class="mode-note"><span class="note-icon">◉</span><p><strong>离线演示已启用</strong><span>使用内置故障规则与真实源码检索，无需 API Key，不调用大模型。</span></p><span class="note-tag">零 API 调用</span></div>
+      <div id="error-banner" class="error-banner" role="alert" hidden><span id="error-text"></span><button id="retry-connection" class="text-button">重新连接</button></div>
+
+      <div class="workspace-grid">
+        <section class="composer panel">
+          <div class="panel-heading"><h2><span class="section-number">01</span> 描述问题</h2><span class="tiny-label">INPUT</span></div>
+          <form id="issue-form">
+            <label for="project">目标代码仓库</label>
+            <div class="select-wrap"><span>▱</span><select id="project" required aria-label="目标代码仓库"><option value="demo-shop">Demo Shop</option></select></div>
+            <div class="label-row"><label for="issue">发生了什么？</label><span id="char-count">0 / 6000</span></div>
+            <textarea id="issue" minlength="10" maxlength="6000" required placeholder="描述预期行为与实际结果，或粘贴错误信息、函数名与复现线索…"></textarea>
+            <div class="sample-label">从一个示例开始 <span>↓</span></div>
+            <div id="examples" class="examples"></div>
+            <button id="submit" class="primary-button" type="submit" disabled><span>开始分析</span><span>↗</span></button>
+            <p class="form-footnote">仅读取代码，不自动修改文件或执行测试。</p>
+          </form>
+          <div class="model-info"><span>RUNTIME</span><strong id="model-name">deterministic-fixtures</strong><small id="budget-label">最多 10 轮调查 · 有界工具调用</small></div>
+        </section>
+
+        <div class="results-column">
+          <section class="pipeline panel">
+            <div class="panel-heading"><h2><span class="section-number">02</span> 协作流程</h2><span id="run-status" class="status-pill idle">等待输入</span></div>
+            <div class="stages">
+              <div class="stage" data-stage="planner"><span class="stage-icon">01</span><div><strong>Planner</strong><small>制定调查计划</small></div><span class="stage-check"></span></div><span class="stage-arrow">→</span>
+              <div class="stage" data-stage="investigator"><span class="stage-icon">02</span><div><strong>Investigator</strong><small>检索与读取代码</small></div><span class="stage-check"></span></div><span class="stage-arrow">→</span>
+              <div class="stage" data-stage="reviewer"><span class="stage-icon">03</span><div><strong>Reviewer</strong><small>核验证据与结论</small></div><span class="stage-check"></span></div>
+            </div>
+            <div class="metrics"><div><span>工具调用</span><strong id="metric-tools">—</strong></div><div><span>模型调用</span><strong id="metric-models">—</strong></div><div><span>返回 Token 用量</span><strong id="metric-tokens">—</strong></div><div><span>执行耗时</span><strong id="metric-duration">—</strong></div></div>
+          </section>
+
+          <section class="report-panel panel">
+            <div class="report-toolbar"><div class="tabs" role="tablist" aria-label="分析结果"><button class="tab active" id="report-tab" role="tab" aria-selected="true" aria-controls="report-view">调查报告</button><button class="tab" id="trace-tab" role="tab" aria-selected="false" aria-controls="trace-view">执行日志 <span id="event-count">0</span></button></div><a id="download" class="download-button" hidden>↓ 导出报告</a></div>
+            <div id="run-meta" class="run-meta" hidden></div>
+            <div id="report-view" role="tabpanel" aria-labelledby="report-tab">
+              <div id="empty-state" class="empty-state"><div class="evidence-graphic"><div class="graphic-file"><i></i><i></i><i></i></div><span class="graphic-check">✓</span><div class="orbit-dot"></div></div><h3>好的调查，从证据开始</h3><p>选择左侧示例，观察三个角色如何协作<br>将故障线索转化为代码证据。</p><div class="empty-tags"><span>代码行号</span><span>原文核验</span><span>可追溯日志</span></div></div>
+              <div id="running-state" class="running-state" hidden><span class="spinner"></span><h3 id="running-title">正在分析</h3><p id="running-note">每一个步骤都会保存在执行日志中。</p><ol id="plan-list"></ol></div>
+              <div id="failure-state" class="failure-state" hidden><span class="failure-symbol">!</span><h3>调查暂停</h3><p id="failure-message"></p><button id="resume" class="secondary-button">从检查点继续 ↗</button><small>保留已消耗预算；预算耗尽时请新建更具体的调查。</small></div>
+              <article id="report-content" hidden></article>
+            </div>
+            <div id="trace-view" role="tabpanel" aria-labelledby="trace-tab" hidden><div class="trace-caption"><span class="status-dot"></span> 操作摘要与工具结果 · 不包含模型内部思维链</div><div id="events" class="events"><p class="trace-empty">运行开始后，执行记录会显示在这里。</p></div></div>
+          </section>
+        </div>
+      </div>
+      <footer><span>TRIAGEFLOW <span class="footer-dot">·</span> OPEN SOURCE AGENT WORKBENCH</span><span>引用可信，不代表结论一定正确。请验证修复建议。</span></footer>
+    </div>
+  </main>
+</body>
+</html>

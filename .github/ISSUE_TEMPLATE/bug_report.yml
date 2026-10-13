@@ -1,0 +1,16 @@
+name: Bug report
+description: Report a reproducible TriageFlow issue
+body:
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: Reproduction steps
+      description: Include mode, OS, Python version and steps. Remove credentials and private code.
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected and actual behavior
+    validations:
+      required: true
